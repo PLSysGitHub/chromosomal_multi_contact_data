@@ -1,0 +1,2 @@
+.h5 filter=lfs diff=lfs merge=lfs -text
+Extract_triplets/MaxEnt_contact_data.txt filter=lfs diff=lfs merge=lfs -text
