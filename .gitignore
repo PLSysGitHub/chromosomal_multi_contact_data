@@ -27,4 +27,4 @@ docs/site/
 Manifest.toml
 
 # Large files that don't fit into GitHub
-Triplet_files/*
+Triplet_files/*.h5
