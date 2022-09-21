@@ -1,7 +1,7 @@
 """
 This file contains functions for calculating contact triplet predictions as
 described in the preprint
-"Multi-contact statistics distinguish models of chromosome organization"
+"Predicting chromosomal multi-contact data using pairwise contact frequencies"
 
 Many functions have a variable periodic=true, which can should be set to false
 when not considering bacterial chromosomes.
@@ -59,7 +59,7 @@ Return 3D prediction for contact triplets
 
     P(i,j,k) ≈ P(i,j)P(j,k)+P(j,k)P(k,i)+P(k,i)P(i,j)
 """
-function ind_link_first_order(contacts;periodic=true)
+function loop_extr_first_order(contacts;periodic=true)
     N=size(contacts)[1]
     triplets=zeros(N,N,N)
     for i in 1:N
@@ -93,7 +93,7 @@ Return 3D prediction for contact triplets
     2P(i,j)P(j,k)P(k,i)
 
 """
-function ind_link(contacts;periodic=true)
+function loop_extr(contacts;periodic=true)
     N=size(contacts)[1]
     triplets=zeros(N,N,N)
     for i in 1:N
@@ -119,11 +119,11 @@ end
 """
 Given pair-wise contact frequencies P(i,j)
 Return prediction for contact triplets.
-For i<j<k, the shortest loop prediction is:
+For i<j<k, the ideal polymer prediction is:
 
     P(i,j,k) ≈ P(i,j)P(j,k)
 """
-function ind_loop(contacts;periodic=true)
+function ideal(contacts;periodic=true)
     N=size(contacts)[1]
     triplets=zeros(N,N,N)
     for i in 1:N

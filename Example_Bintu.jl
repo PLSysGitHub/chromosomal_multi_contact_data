@@ -31,12 +31,12 @@ triplets=read(h5open(triplet_file,"r"),"triplets")
 P_3_s = triplets_1d(triplets, periodic=false)
 P_3_s = cat(P_3_s, zeros(length(P_3_s),3), dims=2) #space for predicted P_3(s) curves
 
-for (index,prediction) in enumerate(["ind_loop","ind_link","pairwise"])
+for (index,prediction) in enumerate(["ideal","loop_extr","pairwise"])
         file_prefix=out_dir*prediction
-        if prediction== "ind_loop"
-                pred_triplets=ind_loop(P, periodic=false)
-        elseif prediction=="ind_link"
-                pred_triplets=ind_link(P, periodic=false)
+        if prediction== "ideal"
+                pred_triplets=ideal(P, periodic=false)
+        elseif prediction=="loop_extr"
+                pred_triplets=loop_extr(P, periodic=false)
         elseif prediction=="pairwise"
                 pred_triplets=pairwise_int(P, P0, periodic=false)
                 #save the effective energy map
@@ -87,7 +87,7 @@ end
 #Save all the P_3(s) curves
 xs=(4*4:4:4*(size(P_3_s)[1]+3))*10 #axis in kb
 
-plot(xs, P_3_s, label=["Data" "Ind. loop" "Ιnd. link" "Pairwise"],
+plot(xs, P_3_s, label=["Bintu et.al. data" "Ideal pol." "Loop-extr." "Pairwise int."],
         xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
         ylabel="Mean triplet probability", size=[500,400])
 png(out_dir*"P_3_s_curves")

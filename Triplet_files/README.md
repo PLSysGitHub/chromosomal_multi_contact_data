@@ -1,2 +1,2 @@
 This directory should contain the contact triplet probabilities extracted from data.
-You can either generate the examples by running the scripts in Extract_triplets, or download the files from https://www.dropbox.com/sh/i7n0oilssu0il0a/AACu_rbH7aXy578lVBVqLhwna?dl=0
+You can either generate the examples by running the scripts in Extract_triplets, or download the files from [Dropbox](https://www.dropbox.com/sh/i7n0oilssu0il0a/AACu_rbH7aXy578lVBVqLhwna?dl=0)
