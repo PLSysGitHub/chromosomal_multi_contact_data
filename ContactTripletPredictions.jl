@@ -244,7 +244,7 @@ two smallest loops in (i,j,k)
 Bins with zero counts are output as NaN
 """
 function project_2d(M::Array{Float64,3};periodic=true)
-    N=size(triplets)[1]
+    N=size(M)[1]
     if periodic
         #max size of smaller loop is for (1,2,N/2)
         A=zeros(floor(Int64,N/3),floor(Int64,N/2))
@@ -318,4 +318,20 @@ rather than vector, of p-values
 function adjust_array(pValues,method)
     original_size=size(pValues)
     return reshape(adjust(vec(pValues),method),original_size)
+end
+
+"""
+Function that returns matrix with A in lower half
+and B in upper half. For plotting two matrices at once.
+"""
+function half_half(A,B)
+    N=size(A)[1]
+    halves=zeros(N,N)
+    for i in 1:N
+        for j in i+1:N
+            halves[i,j]=A[i,j]
+            halves[j,i]=B[i,j]
+        end
+    end
+    return halves
 end
