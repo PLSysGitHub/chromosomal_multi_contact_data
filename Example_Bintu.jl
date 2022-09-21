@@ -87,7 +87,7 @@ end
 #Save all the P_3(s) curves
 xs=(4*4:4:4*(size(P_3_s)[1]+3))*10 #axis in kb
 
-plot(xs, P_3_s, label=["Data" "Ind. link" "Ιnd. loop" "Pairwise"],
+plot(xs, P_3_s, label=["Data" "Ind. loop" "Ιnd. link" "Pairwise"],
         xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
         ylabel="Mean triplet probability", size=[500,400])
 png(out_dir*"P_3_s_curves")
