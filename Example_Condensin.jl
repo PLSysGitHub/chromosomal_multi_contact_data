@@ -28,6 +28,9 @@ if !isdir(out_dir) mkdir(out_dir) end
 P=readdlm(contact_file)
 P0=readdlm(P0_file)
 triplets=read(h5open(triplet_file,"r"),"triplets")
+f_factors=h5read(triplet_file,"f_factors") #Polovnikov et.al. 2019, correction factor for fractal dimension not 2
+f_factors[isnan.(f_factors)].=0
+f_factors[isinf.(f_factors)].=0
 N=size(P)[1]
 #Start pipeline
 P_3_s = triplets_1d(triplets)
@@ -59,10 +62,14 @@ heatmap(project_2d(triplets, periodic=true),
 png(out_dir*"measured_probabilities_2D_average")
 
 
-for (index,prediction) in enumerate(["ideal","loop_extr","pairwise"])
+for (index,prediction) in enumerate(["ideal","loop_extr","pairwise", "quad_hamiltonian"])
         file_prefix=out_dir*prediction
         if prediction== "ideal"
                 pred_triplets=ideal(P)
+        elseif prediction=="quad_hamiltonian"
+                pred_triplets=ideal(P)
+                pred_triplets.*=f_factors
+                pred_triplets[pred_triplets.>1].=1
         elseif prediction=="loop_extr"
                 pred_triplets=loop_extr(P)
         elseif prediction=="pairwise"
@@ -117,7 +124,12 @@ end
 
 #Save all the P_3(s) curves
 xs=(4*4:4:4*(size(P_3_s)[1]+3))*10 #axis in kb
-plot(xs,P_3_s, label=["Condensin data" "Ideal pol." "Loop-extr." "Pairwise int."],
+plot(xs,P_3_s[:,1:4], label=["Condensin data" "Ideal polymer" "Loop-extruder" "Pairwise interaction"],
         xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
-        ylabel="Mean triplet probability", size=[500,400])
+        ylabel="Mean triplet probability", size=[640,500])
 png(out_dir*"P_3_s_curves")
+
+plot(xs,P_3_s[:,[1,5]], label=["Condensin data" "Quadratic Hamiltonian" "Loop-extruder"],
+        xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
+        ylabel="Mean triplet probability", size=[640,500])
+png(out_dir*"quad_hamiltonian_P_3_s_curves")

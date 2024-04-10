@@ -14,7 +14,6 @@ pythonplot(label="",size=(550,500), grid=false, colorbar_titlefontsize=15, legen
         framestyle=:box)
 
 #Change names of files and directories to analyse different data
-num_samp=1574
 contact_file="./Contact_files/bintu_IMR90.txt"
 P0_file="./Contact_files/P0_linear_n10_b119.27064620249611_N65_R7.021446824210077.txt"
 triplet_file="./Triplet_files/bintu_IMR90.h5" #triplet file should contain 3D triplet frequency array as "triplets"
@@ -28,6 +27,10 @@ bait_point=40
 P=readdlm(contact_file)
 P0=readdlm(P0_file)
 triplets=read(h5open(triplet_file,"r"),"triplets")
+num_samp=h5read(triplet_file,"num_samples")
+f_factors=h5read(triplet_file,"f_factors") #Polovnikov et.al. 2019, correction factor for fractal dimension not 2
+f_factors[isnan.(f_factors)].=0
+triplets[isnan.(triplets)].=0
 
 #Do all plots and save in out_dir
 P_3_s = triplets_1d(triplets, periodic=false)
@@ -44,7 +47,7 @@ heatmap(project_2d(triplets, periodic=false),
         color=cgrad(:gist_heat, rev=true), clims=(0,0.1), scale=:log10)
 png(out_dir*"measured_probabilities_2D_average")
 
-for (index,prediction) in enumerate(["ideal","loop_extr","pairwise"])
+for (index,prediction) in enumerate(["ideal", "loop_extr", "pairwise", "quad_hamiltonian"])
         file_prefix=out_dir*prediction
         if prediction== "ideal"
                 pred_triplets=ideal(P, periodic=false)
@@ -55,7 +58,10 @@ for (index,prediction) in enumerate(["ideal","loop_extr","pairwise"])
                 #save the effective energy map
                 heatmap(-log.(P./P0), clims=(-5,5), color=cgrad(:coolwarm))
                 png(file_prefix*"_energy_estimate")
-        else
+        elseif prediction=="quad_hamiltonian"
+                pred_triplets=ideal(P, periodic=false)
+                pred_triplets.*=f_factors
+        else                
                 error("Unknown prediction label $prediction")
         end
 
@@ -106,10 +112,15 @@ end
 #Save all the P_3(s) curves
 xs=(4*4:4:4*(size(P_3_s)[1]+3))*10 #axis in kb
 
-plot(xs, P_3_s, label=["Bintu et.al. data" "Ideal pol." "Loop-extr." "Pairwise int."],
+plot(xs, P_3_s[:, 1:4], label=["Bintu et.al. data" "Ideal polymer" "Loop-extruder" "Pairwise interaction" "Quadratic Hamiltonian" ],
         xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
-        ylabel="Mean triplet probability", size=[500,400], legend=:bottomleft)
+        ylabel="Mean triplet probability", size=[640,500], legend=:bottomleft)
 png(out_dir*"P_3_s_curves")
+
+plot(xs, P_3_s[:,[1,5]], label=["Bintu et.al. data" "Quadratic Hamiltonian" ],
+        xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
+        ylabel="Mean triplet probability", size=[640,500], legend=:bottomleft)
+png(out_dir*"quad_hamiltonian_P_3_s_curves")
 
 #Make comparison plots for scalings
 P_S=P_s(P, periodic=false)
