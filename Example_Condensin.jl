@@ -11,7 +11,8 @@ include("ContactTripletPredictions.jl")
 using Plots,HDF5, DelimitedFiles, StatsBase
 pythonplot(label="",size=(540,500), grid=false, colorbar_titlefontsize=15, legendfontsize=15,
         guidefontsize=15, tickfontsize=15,colorbar_tickfontsize=12, linewidth=1.5,
-        yticks=(100:100:400,1000:1000:4000), #units in kb
+        yticks=(200:200:400,["$i kb" for i in 2000:2000:4000]), yrotation=90,
+        xticks=(0:200:400, ["$i kb" for i in 0:2000:4000]),#units in kb        
         foreground_color_legend = nothing, background_color_legend=nothing,
         framestyle=:box)
 
@@ -35,15 +36,20 @@ P_3_s = cat(P_3_s, zeros(length(P_3_s),3), dims=2) #space for predicted P_3(s) c
 #Point around which to build plots
 bait_point=300
 
+heatmap(P, clims=(0,0.25), color=cgrad(:dense), colorbartitle="Contact probability", size=(550,400))
+png(out_dir*"contact_map")
+
 #Make comparison plots for scalings
 P_S=P_s(P, periodic=true)
-plot((2:N)*10,P_S, scale=:log10, xticks=:auto, yticks=:auto, ylabel="LE simulation P(s)", xlabel="s")
+plot((2:N)*10,P_S, scale=:log10, xticks=:auto, yticks=:auto, ylabel="Condensin simulation P(s)", xlabel="s")
 png(out_dir*"P_s")
 
 #Actual triplet probabilities
-heatmap(triplets[:,:,bait_point], clims=(0,0.0035),
+norm_triplets=triplets[:,:,bait_point]./mean(triplets[:,:,bait_point])
+norm_triplets=half_half(norm_triplets, zeros(size(norm_triplets)))
+heatmap(norm_triplets, clims=(0,20),
         color=cgrad(:gist_heat, rev=true),
-        colorbartitle="Triplet probability", size=(600,500))
+        colorbartitle="Triplet probability relative to mean", size=(550,400))
 png(out_dir*"measured_triplets_bait_$(bait_point)")
 
 #2D average probabilities
