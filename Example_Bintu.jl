@@ -34,7 +34,7 @@ triplets[isnan.(triplets)].=0
 
 #Do all plots and save in out_dir
 P_3_s = triplets_1d(triplets, periodic=false)
-P_3_s = cat(P_3_s, zeros(length(P_3_s),3), dims=2) #space for predicted P_3(s) curves
+P_3_s = cat(P_3_s, zeros(length(P_3_s),4), dims=2) #space for predicted P_3(s) curves
 
 heatmap(triplets[:,:,bait_point], clims=(0,0.1),
         color=cgrad(:gist_heat, rev=true),

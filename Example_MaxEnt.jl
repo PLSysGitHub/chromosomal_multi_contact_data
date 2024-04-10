@@ -28,11 +28,14 @@ if !isdir(out_dir) mkpath(out_dir) end
 P=readdlm(contact_file)
 P0=readdlm(P0_file)
 triplets=read(h5open(triplet_file,"r"),"triplets")
+f_factors=h5read(triplet_file,"f_factors") #Polovnikov et.al. 2019, correction factor for fractal dimension not 2
+f_factors[isnan.(f_factors)].=0
+f_factors[isinf.(f_factors)].=0
 N=size(P)[1]
 
 #Start pipeline
 P_3_s = triplets_1d(triplets)
-P_3_s = cat(P_3_s, zeros(length(P_3_s),3), dims=2) #space for predicted P_3(s) curves
+P_3_s = cat(P_3_s, zeros(length(P_3_s),4), dims=2) #space for predicted P_3(s) curves
 
 heatmap(P.*N/sum(P), clims=(0,0.04), color=cgrad(:dense), colorbartitle="Hi-C score", size=(550,400))
 png(out_dir*"contact_map")
@@ -58,10 +61,14 @@ heatmap(project_2d(triplets, periodic=true),
         color=cgrad(:gist_heat, rev=true), clims=(0,0.0035), scale=:log10)
 png(out_dir*"measured_probabilities_2D_average")
 
-for (index,prediction) in enumerate(["ideal","loop_extr","pairwise"])
+for (index,prediction) in enumerate(["ideal","loop_extr","pairwise", "quad_hamiltonian"])
         file_prefix=out_dir*prediction
         if prediction== "ideal"
                 pred_triplets=ideal(P)
+        elseif prediction=="quad_hamiltonian"
+                pred_triplets=ideal(P)
+                pred_triplets.*=f_factors
+                pred_triplets[pred_triplets.>1].=1
         elseif prediction=="loop_extr"
                 pred_triplets=loop_extr(P)
         elseif prediction=="pairwise"
@@ -115,8 +122,13 @@ for (index,prediction) in enumerate(["ideal","loop_extr","pairwise"])
 end
 
 #Save all the P_3(s) curves
-xs=(4*4:4:4*(size(P_3_s)[1]+3))*10 #axis in kb
-plot(xs,P_3_s, label=["Data" "Ind. loop" "Ind. link" "Pairwise"],
+xs=(1:length(P_3_s[:,1]))*10 #axis in kb
+plot(xs,P_3_s[:,1:4], label=["MaxEnt" "Ideal polymer" "Loop-extruder" "Pairwise interaction"],
         xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
-        ylabel="Mean triplet probability", size=[500,400])
+        ylabel="Mean triplet probability", size=[640,500])
 png(out_dir*"P_3_s_curves")
+
+plot(xs,P_3_s[:,[1,5]], label=["MaxEnt" "Quadratic Hamiltonian" "Loop-extruder"],
+        xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
+        ylabel="Mean triplet probability", size=[640,500])
+png(out_dir*"quad_hamiltonian_P_3_s_curves")

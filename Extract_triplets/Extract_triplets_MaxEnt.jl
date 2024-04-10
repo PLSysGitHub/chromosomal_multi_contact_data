@@ -16,6 +16,9 @@ frequencies can also be found efficiently.
 
 """
 
+
+using HDF5, DelimitedFiles, ProgressMeter, Distances, LinearAlgebra
+
 """
 Return the non-normalised contact map calculated from
 contact list file
@@ -31,9 +34,6 @@ configuration.
 n is the number to divide indices by (C++ MaxEnt simulations
 use n=4)
 """
-
-using HDF5, DelimitedFiles
-
 function sample_contacts(file_name::String,pol_length, n)
     sampled_hi_c=zeros(pol_length,pol_length)
     num_samples=0
@@ -123,6 +123,47 @@ triplets=sample_triplets(contact_file, N,n)
 #save the data
 fid=h5open(out_triplets,"w")
 fid["triplets"]=triplets
+fid["num_samples"]=num_samples
 close(fid)
 
 writedlm(out_contacts,contacts)
+
+#For Polovnikov et.al. 2019, we need distance correlations
+r=zeros(N,N,N) #correlation of distances, according to Polovnikov et.al. 2019
+d_squared=zeros(N,N)
+f_name="Triplet_files/MaxEnt_configs_3D.h5"
+num_3d_samples=0
+h5open(f_name,"r") do fid
+    ks=filter(x->isnumeric(x[1]), keys(fid))
+    global num_3d_samples=length(ks)
+    @showprogress 1 "Looping through positions to calculate f-factors..." for i in ks
+        data=read(fid,"$i") 
+        ds=pairwise(Euclidean(),data,dims=2)
+        d_squared.+=ds.^2
+        r .+= reshape(ds, N, N, 1) .* reshape(ds, 1, N, N) #dij*djk
+    end
+end
+
+r./=num_3d_samples #now <r_ij r_jk> for all i,j,k
+d_squared./=num_3d_samples #now <r_ij^2> for all i,j
+#Divide to get r = <r_ij r_jk> / sqrt(<r_ij^2> <r_jk^2>)
+r./= sqrt.(reshape(d_squared, N, N, 1) .* reshape(d_squared, 1, N, N))
+f=(1 .- r.^2).^(-3/2) #N,N,N array of factors f, see Polovnikov et.al. 2019
+
+#symmetrise for i<j<k
+for i in 1:N
+    for j in i+1:N
+        for k in j+1:N
+            f[k,j,i]=f[i,j,k]
+            f[i,k,j]=f[i,j,k]
+            f[j,i,k]=f[i,j,k]
+            f[j,k,i]=f[i,j,k]
+            f[k,i,j]=f[i,j,k]
+        end
+    end
+end
+
+#save the data
+fid=h5open(out_triplets,"r+")
+fid["f_factors"]=f
+close(fid)

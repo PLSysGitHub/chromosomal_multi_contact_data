@@ -34,7 +34,7 @@ f_factors[isinf.(f_factors)].=0
 N=size(P)[1]
 #Start pipeline
 P_3_s = triplets_1d(triplets)
-P_3_s = cat(P_3_s, zeros(length(P_3_s),3), dims=2) #space for predicted P_3(s) curves
+P_3_s = cat(P_3_s, zeros(length(P_3_s),4), dims=2) #space for predicted P_3(s) curves
 
 #Point around which to build plots
 bait_point=300
@@ -123,7 +123,7 @@ for (index,prediction) in enumerate(["ideal","loop_extr","pairwise", "quad_hamil
 end
 
 #Save all the P_3(s) curves
-xs=(4*4:4:4*(size(P_3_s)[1]+3))*10 #axis in kb
+xs=(1:length(P_3_s[:,1]))*10 #axis in kb
 plot(xs,P_3_s[:,1:4], label=["Condensin data" "Ideal polymer" "Loop-extruder" "Pairwise interaction"],
         xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
         ylabel="Mean triplet probability", size=[640,500])

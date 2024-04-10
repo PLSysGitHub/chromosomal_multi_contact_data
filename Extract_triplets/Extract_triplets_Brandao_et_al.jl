@@ -38,7 +38,7 @@ contact_R=5
         data=read(fid,"$cell/pos")[:,1:10:end] #for 10 kb bins use every 10th
         ds=pairwise(Euclidean(),data,dims=2)
         d_squared.+=ds.^2
-        r .+= reshape(ds, size(ds, 1), size(ds, 2), 1) .* reshape(ds, 1, size(ds, 2), size(ds, 1))
+        r .+= reshape(ds, N, N, 1) .* reshape(ds, 1, N, N)
         #Check for contacts and triplets
         for i in 1:N
             for j in i+1:N
@@ -80,9 +80,10 @@ end
 r./=num_samples #now <r_ij r_jk> for all i,j,k
 d_squared./=num_samples #now <r_ij^2> for all i,j
 #Divide to get r = <r_ij r_jk> / sqrt(<r_ij^2> <r_jk^2>)
-r./= sqrt.(reshape(d_squared, size(d_squared, 1), size(d_squared, 2), 1) .* reshape(d_squared, 1, size(d_squared, 2), size(d_squared, 1)))
+r./= sqrt.(reshape(d_squared, N, N, 1) .* reshape(d_squared, 1, N, N))
 f=(1 .- r.^2).^(-3/2) #N,N,N array of factors f, see Polovnikov et.al. 2019
 
+#symmetrise for i<j<k
 for i in 1:N
     for j in i+1:N
         for k in j+1:N
