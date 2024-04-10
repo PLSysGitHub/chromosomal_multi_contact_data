@@ -31,6 +31,9 @@ configuration.
 n is the number to divide indices by (C++ MaxEnt simulations
 use n=4)
 """
+
+using HDF5, DelimitedFiles
+
 function sample_contacts(file_name::String,pol_length, n)
     sampled_hi_c=zeros(pol_length,pol_length)
     num_samples=0
@@ -105,8 +108,8 @@ end
 N=405 #Number of bins
 n=4 #number of monomers a bin is mapped to. 4 by default in MaxEnt program
 
-out_triplets="Triplet_files/MaxEnt_triplets_test.h5"
-out_contacts="Contact_files/c_crescentus_hic_test.txt"
+out_triplets="Triplet_files/MaxEnt_triplets.h5"
+out_contacts="Contact_files/c_crescentus_hic.txt"
 contact_file="Extract_triplets/MaxEnt_contact_data.txt"
 
 #=

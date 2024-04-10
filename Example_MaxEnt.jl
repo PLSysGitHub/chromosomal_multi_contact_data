@@ -19,9 +19,9 @@ pythonplot(label="",size=(540,500), grid=false, colorbar_titlefontsize=15, legen
 num_samp=76800
 contact_file="./Contact_files/c_crescentus_hic.txt"
 P0_file="./Contact_files/P0_MaxEnt.txt"
-triplet_file="./Triplet_files/MaxEnt_triplets_test.h5" #triplet file should contain 3D triplet frequency array as "triplets"
+triplet_file="./Triplet_files/MaxEnt_triplets.h5" #triplet file should contain 3D triplet frequency array as "triplets"
 out_dir="./Output/MaxEnt_example/"
-if !isdir(out_dir) mkdir(out_dir) end
+if !isdir(out_dir) mkpath(out_dir) end
 
 #Read in the data
 P=readdlm(contact_file)

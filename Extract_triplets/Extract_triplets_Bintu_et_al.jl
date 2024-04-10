@@ -13,8 +13,8 @@ File format:
 cell, locus, x, y, z, (cell cycle phase)
 =#
 
-out_contacts="Contact_files/bintu_IMR90_test.txt"
-out_triplets="Triplet_files/bintu_IMR90_test.h5"
+out_contacts="Contact_files/bintu_IMR90.txt"
+out_triplets="Triplet_files/bintu_IMR90.h5"
 in_file_name="Extract_triplets/IMR90_chr21-28-30Mb_cell cycle.csv"
 
 if !isfile(in_file_name)

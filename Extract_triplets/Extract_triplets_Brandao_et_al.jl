@@ -13,12 +13,12 @@ using Distances
 
 #Folder with the .h5 files from the loop extruder simulations
 folder="Extract_triplets/Example_Brandao/"
-out_triplets="Triplet_files/loop_extruder_triplets_test.h5"
-out_contacts="Contact_files/loop_extruder_hic_test.txt"
+out_triplets="Triplet_files/condensin_triplets.h5"
+out_contacts="Contact_files/condensin_hic.txt"
 
 ## Similar for non-interacting. Note no need to save triplets!
 # folder="Extract_triplets/Example_Brandao_non_int/"
-# out_contacts="Contact_files/P0_loop_extruder.txt"
+# out_contacts="Contact_files/P0_condensin.txt"
 
 
 file_names=readdir(folder, join=true)
