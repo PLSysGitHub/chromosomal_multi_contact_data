@@ -8,14 +8,16 @@ Compares each to data, and saves plots in given directory
 """
 
 include("ContactTripletPredictions.jl")
-using Plots
-gr(label="",size=(540,500),
-        xticks=(0:100:400, 0:1000:4000), yticks=(100:100:400,1000:1000:4000), #units in kb
-        foreground_color_legend = nothing, background_color_legend=nothing)
+using Plots, LaTeXStrings
+pythonplot(label="",size=(540,500), grid=false, colorbar_titlefontsize=15, legendfontsize=15,
+        guidefontsize=15, tickfontsize=15,colorbar_tickfontsize=12, linewidth=1.5,
+        yticks=(100:100:400,1000:1000:4000), #units in kb
+        foreground_color_legend = nothing, background_color_legend=nothing,
+        framestyle=:box)
 
 #Change names of files and directories to analyse different data
 num_samp=76800
-contact_file="./Contact_files/c_crescentus_hic_test.txt"
+contact_file="./Contact_files/c_crescentus_hic.txt"
 P0_file="./Contact_files/P0_MaxEnt.txt"
 triplet_file="./Triplet_files/MaxEnt_triplets_test.h5" #triplet file should contain 3D triplet frequency array as "triplets"
 out_dir="./Output/MaxEnt_example/"
@@ -34,12 +36,12 @@ P_3_s = cat(P_3_s, zeros(length(P_3_s),3), dims=2) #space for predicted P_3(s) c
 #Point around which to build plots
 bait_point=300
 
-for (index,prediction) in enumerate(["ind_loop","ind_link","pairwise"])
+for (index,prediction) in enumerate(["ideal","loop_extr","pairwise"])
         file_prefix=out_dir*prediction
-        if prediction== "ind_loop"
-                pred_triplets=ind_loop(P)
-        elseif prediction=="ind_link"
-                pred_triplets=ind_link(P)
+        if prediction== "ideal"
+                pred_triplets=ideal(P)
+        elseif prediction=="loop_extr"
+                pred_triplets=loop_extr(P)
         elseif prediction=="pairwise"
                 pred_triplets=pairwise_int(P,P0)
                 #save the effective energy map

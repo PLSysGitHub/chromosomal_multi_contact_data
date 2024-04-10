@@ -11,6 +11,7 @@ Takes maybe 10 minutes to run with high number of samples. Ready
 made file is included.
 
 """
+
 using DelimitedFiles
 using ProgressMeter
 using LinearAlgebra
@@ -108,7 +109,7 @@ num_sims=1000000     #total number sampled
 out_file_name= contact_folder*"P0_linear_n$(n)_b$(b)_N$(N)_R$(R).txt"
 
 #Simulations with ProgressMeter
-contacts=contacts_FJC(N*n, R, num_sims, n, contact_r)
+contacts=contacts_FJC(N*n+1, R, num_sims, n, contact_r)
 
 #Save
 av_contacts=average_contact_map(contacts)
