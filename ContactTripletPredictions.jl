@@ -12,6 +12,7 @@ using HypothesisTests
 using MultipleTesting
 using HDF5
 using DelimitedFiles
+using StatsBase
 
 """
 Helper function gives genomic length of loop (a,b) on
