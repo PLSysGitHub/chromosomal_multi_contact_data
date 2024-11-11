@@ -8,13 +8,7 @@ Compares each to data, and saves plots in given directory
 """
 
 include("ContactTripletPredictions.jl")
-using Plots, LaTeXStrings
-pythonplot(label="",size=(540,500), grid=false, colorbar_titlefontsize=15, legendfontsize=15,
-        guidefontsize=15, tickfontsize=15,colorbar_tickfontsize=12, linewidth=1.5,
-        yticks=(200:200:400,["$i kb" for i in 2000:2000:4000]), yrotation=90,
-        xticks=(0:200:400, ["$i kb" for i in 0:2000:4000]),#units in kb
-        foreground_color_legend = nothing, background_color_legend=nothing,
-        framestyle=:box)
+include("Plot_functions_bacterial.jl")
 
 #Change names of files and directories to analyse different data
 num_samp=76800
@@ -37,29 +31,23 @@ N=size(P)[1]
 P_3_s = triplets_1d(triplets)
 P_3_s = cat(P_3_s, zeros(length(P_3_s),4), dims=2) #space for predicted P_3(s) curves
 
-heatmap(P.*N/sum(P), clims=(0,0.04), color=cgrad(:dense), colorbartitle="Hi-C score", size=(550,400))
+heatmap(P.*(N/sum(P)), color=cgrad(:dense, scale=:exp), clims=(0,0.04), aspect_ratio=1, 
+        colorbartitle="\n\nHi-C score", rightmargin=20Plots.mm, size=(500,400))
 png(out_dir*"contact_map")
 
 #Point around which to build plots
-bait_point=300
+bait_point=200
 
 #Make comparison plots for scalings
 P_S=P_s(P, periodic=true)
-plot((3:N)*10,P_S[2:end], scale=:log10, xticks=:auto, yticks=:auto, ylabel="MaxEnt model P(s)", xlabel="s")
-png(out_dir*"P_s")
+plot((3:N)*10,P_S[2:end], scale=:log10, xticks=:auto, yticks=:auto, ylabel="MaxEnt model P(s)", xlabel=L"s", size=(600,400), linewidth=3, yrotation=0)
+Plots.pdf(out_dir*"P_s")
 
 #Actual triplet probabilities
-norm_triplets=triplets[:,:,bait_point]./mean(triplets[:,:,bait_point])
-norm_triplets=half_half(norm_triplets, zeros(size(norm_triplets)))
-heatmap(norm_triplets, clims=(0,20),        color=cgrad(:gist_heat, rev=true),
-        colorbartitle="Triplet probability relative to mean", size=(550,400))
-png(out_dir*"measured_triplets_bait_$(bait_point)")
+triplet_plot(triplets, out_dir*"measured_triplets_bait_$(bait_point)", bait_point, label="Measured triplet probability")
 
 #2D average probabilities
-heatmap(project_2d(triplets, periodic=true),
-        ticks=:auto, colorbartitle="Triplet probability",
-        color=cgrad(:gist_heat, rev=true), clims=(0,0.0035), scale=:log10)
-png(out_dir*"measured_probabilities_2D_average")
+average_2D_plot(triplets, out_dir*"measured_probabilities_2D_average")
 
 for (index,prediction) in enumerate(["ideal","loop_extr","pairwise", "quad_hamiltonian"])
         file_prefix=out_dir*prediction
@@ -75,10 +63,9 @@ for (index,prediction) in enumerate(["ideal","loop_extr","pairwise", "quad_hamil
                 pred_triplets=pairwise_int(P,P0)
                 #save the effective energy map
                 heatmap(-log.(P./P0), clims=(-5,5),
-                color=cgrad(:coolwarm),
-                colorbartitle="Pairwise energy estimate")
+                        color=cgrad(:coolwarm), aspect_ratio=1,
+                        colorbartitle="\nPairwise energy estimate")
                 png(file_prefix*"_energy_estimate")
-                display(current())
         else
                 error("Unknown prediction label $prediction")
         end
@@ -87,48 +74,23 @@ for (index,prediction) in enumerate(["ideal","loop_extr","pairwise", "quad_hamil
         P_3_s[:,index+1]=triplets_1d(pred_triplets)
 
         #Heatmaps below. Color set for each plot type
-        heatmap(pred_triplets[:,:,bait_point], clims=(0,0.0035),
-                color=cgrad(:gist_heat, rev=true),
-                colorbartitle="Triplet probability")
-        png(file_prefix*"_triplets_bait_$(bait_point)")
-        display(current())
+        triplet_plot(pred_triplets,file_prefix*"_triplets_bait_$(bait_point)", bait_point)
 
         p_values=p_vals(triplets[:,:,bait_point],pred_triplets[:,:,bait_point],num_samp)
 
-        heatmap(p_values, clims=(0,0.1), color=cgrad(:hot),
-                colorbartitle="P-value")
-        png(file_prefix*"_p_vals_bait_$(bait_point)")
-        display(current())
+        p_value_plot(p_values, file_prefix*"_p_vals_bait_$(bait_point)")
 
-        heatmap(adjust_array(p_values,BenjaminiHochberg()),
-                colorbartitle="Benjamini-Hochberg adj. p-value",
-                color=cgrad(:tempo,rev=true), clims=(0,0.3))
-        png(file_prefix*"_BH_adj_p_bait_$(bait_point)")
-        display(current())
+        bh_p_value_plot(p_values,file_prefix*"_BH_adj_p_bait_$(bait_point)")
 
         zs=z_scores(triplets,pred_triplets,num_samp)
 
-        heatmap(zs[:,:,bait_point], colorbartitle="Z-score",
-                color=cgrad(:coolwarm), clims=(-4,4))
-        png(file_prefix*"_z_scores_bait_$(bait_point)")
-        display(current())
+        z_score_plot(zs, bait_point,file_prefix*"_z_scores_bait_$(bait_point)")
 
         #2D average z-scores
-        heatmap(project_2d(zs), scale=:log10,
-                ticks=:auto, colorbartitle="Mean z-score",
-                color=cgrad(:coolwarm), clims=(-4,4))
-        png(file_prefix*"_z_scores_2D_average")
-        display(current())
+        average_2D_z_score_plot(zs, file_prefix*"_z_scores_2D_average")
 end
 
 #Save all the P_3(s) curves
-xs=(1:length(P_3_s[:,1]))*10 #axis in kb
-plot(xs,P_3_s[:,1:4], label=["MaxEnt" "Ideal polymer" "Loop-extruder" "Pairwise interaction"],
-        xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
-        ylabel="Mean triplet probability", size=[640,500])
-png(out_dir*"P_3_s_curves")
+plot_p_3_s_curves(P_3_s[:,1:4], ["MaxEnt" "Ideal polymer" "Loop-extruder" "Pairwise interaction"], out_dir*"P_3_s_curves")
 
-plot(xs,P_3_s[:,[1,5]], label=["MaxEnt" "Quadratic Hamiltonian" "Loop-extruder"],
-        xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
-        ylabel="Mean triplet probability", size=[640,500])
-png(out_dir*"quad_hamiltonian_P_3_s_curves")
+plot_p_3_s_curves(P_3_s[:,[1,5]], ["MaxEnt" "Quadratic Hamiltonian"],out_dir*"quad_hamiltonian_P_3_s_curves")

@@ -5,13 +5,7 @@ on a linear (section of a) chromosome.
 """
 
 include("ContactTripletPredictions.jl")
-
-using Plots, LaTeXStrings
-pythonplot(label="",size=(550,500), grid=false, colorbar_titlefontsize=15, legendfontsize=15,
-        guidefontsize=15, tickfontsize=15,colorbar_tickfontsize=12, linewidth=1.5,
-        xticks=(0:30:60,28:1:30), yticks=(30:30:60, 29:30), #units Mb
-        foreground_color_legend = nothing, background_color_legend=nothing,
-        framestyle=:box)
+include("Plot_functions_Bintu.jl")
 
 #Change names of files and directories to analyse different data
 for contact_R in [100, 125, 150, 175, 200] #nm
@@ -22,14 +16,14 @@ for contact_R in [100, 125, 150, 175, 200] #nm
         mkpath(out_dir)
 
         #Point around which to build plots
-        bait_point=40
+        bait_point=20
 
         #Read in the data
         P=readdlm(contact_file)
         P0=readdlm(P0_file)
         triplets=read(h5open(triplet_file,"r"),"triplets")
         num_samp=h5read(triplet_file,"num_samples")
-        f_factors=h5read(triplet_file,"f_factors") #Polovnikov et.al. 2019, correction factor for fractal dimension not 2
+        f_factors=h5read(triplet_file,"f_factors") #Polovnikov et al. 2019, correction factor for fractal dimension not 2
         f_factors[isnan.(f_factors)].=0
         triplets[isnan.(triplets)].=0
 
@@ -37,16 +31,10 @@ for contact_R in [100, 125, 150, 175, 200] #nm
         P_3_s = triplets_1d(triplets, periodic=false)
         P_3_s = cat(P_3_s, zeros(length(P_3_s),4), dims=2) #space for predicted P_3(s) curves
 
-        heatmap(triplets[:,:,bait_point], clims=(0,0.1),
-                color=cgrad(:gist_heat, rev=true),
-                colorbartitle="Triplet probability")
-        png(out_dir*"measured_triplets_bait_$(bait_point)")
+        triplet_plot(triplets,out_dir*"measured_triplets_bait_$(bait_point)", bait_point)
 
         #2D average probabilities
-        heatmap(project_2d(triplets, periodic=false),
-                ticks=:auto, colorbartitle="Triplet probability",
-                color=cgrad(:gist_heat, rev=true), clims=(0,0.1), scale=:log10)
-        png(out_dir*"measured_probabilities_2D_average")
+        average_2D_plot(triplets, out_dir*"measured_probabilities_2D_average")
 
         for (index,prediction) in enumerate(["ideal", "loop_extr", "pairwise", "quad_hamiltonian"])
                 file_prefix=out_dir*prediction
@@ -70,64 +58,32 @@ for contact_R in [100, 125, 150, 175, 200] #nm
                 P_3_s[:,index+1]=triplets_1d(pred_triplets, periodic=false)
 
                 #Heatmaps below. Color set for each plot type
-                heatmap(pred_triplets[:,:,bait_point], clims=(0,0.1),
-                        color=cgrad(:gist_heat, rev=true),
-                        colorbartitle="Triplet probability")
-                png(file_prefix*"_triplets_bait_$(bait_point)")
-                display(current())
+                triplet_plot(pred_triplets,file_prefix*"_triplets_bait_$(bait_point)", bait_point)
 
                 p_values=p_vals(triplets[:,:,bait_point],pred_triplets[:,:,bait_point],num_samp)
 
-                heatmap(p_values, clims=(0,0.1), color=cgrad(:hot),
-                colorbartitle="P-value")
-                png(file_prefix*"_p_vals_bait_$(bait_point)")
-                display(current())
+                p_value_plot(p_values, file_prefix*"_p_vals_bait_$(bait_point)")
 
-                heatmap(adjust_array(p_values,BenjaminiHochberg()),
-                colorbartitle="Benjamini-Hochberg adj. p-value",
-                color=cgrad(:tempo,rev=true), clims=(0,0.3))
-                png(file_prefix*"_BH_adj_p_bait_$(bait_point)")
-                display(current())
+                bh_p_value_plot(p_values,file_prefix*"_BH_adj_p_bait_$(bait_point)")
 
                 zs=z_scores(triplets,pred_triplets,num_samp)
 
-                heatmap(zs[:,:,bait_point], colorbartitle="Z-score",
-                        color=cgrad(:coolwarm), clims=(-4,4))
-                        png(file_prefix*"_z_scores_bait_$(bait_point)")
-                display(current())
+                z_score_plot(zs, bait_point, file_prefix*"_z_scores_bait_$(bait_point)")
 
                 #2D average z-scores
-                heatmap(project_2d(zs, periodic=false),
-                        ticks=:auto, colorbartitle="Mean z-score",
-                        color=cgrad(:coolwarm), clims=(-4,4))
-                        png(file_prefix*"_z_scores_2D_average")
-                display(current())
-
-                heatmap(project_2d(pred_triplets, periodic=false),
-                        ticks=:auto, colorbartitle="Triplet probability",
-                        color=cgrad(:gist_heat, rev=true), clims=(0,0.1), scale=:log10)
-                png(file_prefix*"_probabilities_2D_average")
-                display(current())
+                average_2D_z_score_plot(zs,file_prefix*"_z_scores_2D_average")
+                average_2D_plot(pred_triplets, file_prefix*"_probabilities_2D_average")
         end
-
+        P_3_s[P_3_s.>=1].=NaN
         #Save all the P_3(s) curves
-        xs=(4*4:4:4*(size(P_3_s)[1]+3))*10 #axis in kb
-
-        plot(xs, P_3_s[:, 1:4], label=["Bintu et.al. data" "Ideal polymer" "Loop-extruder" "Pairwise interaction" "Quadratic Hamiltonian" ],
-                xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
-                ylabel="Mean triplet probability", size=[640,500], legend=:bottomleft)
-        png(out_dir*"P_3_s_curves")
-
-        plot(xs, P_3_s[:,[1,5]], label=["Bintu et.al. data" "Quadratic Hamiltonian" ],
-                xlabel="Genomic length largest loop (kb)", scale=:log10, ticks=:auto,
-                ylabel="Mean triplet probability", size=[640,500], legend=:bottomleft)
-        png(out_dir*"quad_hamiltonian_P_3_s_curves")
+        plot_p_3_s_curves(P_3_s[:, 1:4], ["Bintu et al. data" "Ideal polymer" "Loop-extruder" "Pairwise interaction" "Quadratic Hamiltonian" ],out_dir*"P_3_s_curves.pdf")
+        plot_p_3_s_curves(P_3_s[:,[1,5]], ["Bintu et al. data" "Quadratic Hamiltonian" ],out_dir*"quad_hamiltonian_P_3_s_curves.pdf")
 
         #Make comparison plots for scalings
         P_S=P_s(P, periodic=false)
-        plot(P_S, scale=:log10, xticks=(1:30:61,0:2), yticks=:auto, linewidth=2,
-                ylabel="Bintu et.al. P(s)", xlabel="s (Mb)", size=(500,400))
-        png(out_dir*"P_s")
+        plot(P_S, scale=:log10, xticks=(1:30:61,0:2), yticks=:auto,
+                ylabel="Bintu et al. P(s)", xlabel="s (Mb)", size=(500,400))
+        savefig(out_dir*"P_s.pdf")
 
         #Test P(l_1,l_2) scalings
         N=size(P)[1]

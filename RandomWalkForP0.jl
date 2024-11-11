@@ -115,6 +115,6 @@ for contact_r in  contact_radii#nm
     #Generate the name for the output file
     out_file_name= contact_folder*"P0_linear_n$(n)_b$(b)_N$(N)_R$(R)_contact_r_$contact_r.txt"
     #Save
-    av_contacts=average_contact_map(contacts[contact_r])
+    av_contacts=average_contact_map(contacts[contact_r/b])
     writedlm(out_file_name,av_contacts)
 end

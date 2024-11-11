@@ -8,11 +8,7 @@ when not considering bacterial chromosomes.
 """
 
 
-using HypothesisTests
-using MultipleTesting
-using HDF5
-using DelimitedFiles
-using StatsBase
+using HypothesisTests, MultipleTesting, StatsBase, DelimitedFiles, HDF5
 
 """
 Helper function gives genomic length of loop (a,b) on
@@ -330,7 +326,10 @@ given in pred.
 Data should be frequency data.
 """
 function p_vals(data,pred,N_samples::Int64)
-    ps=pvalue.(BinomialTest.(round.(Int64,N_samples*data),N_samples,pred))
+    ps=zeros(size(data))
+    non_nan=.!isnan.(pred)
+    ps[non_nan].=pvalue.(BinomialTest.(round.(Int64,N_samples*data[non_nan]),N_samples,pred[non_nan]))
+    ps[isnan.(data)].=NaN
     return ps
 end
 
