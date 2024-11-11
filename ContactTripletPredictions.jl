@@ -8,10 +8,7 @@ when not considering bacterial chromosomes.
 """
 
 
-using HypothesisTests
-using MultipleTesting
-using HDF5
-using DelimitedFiles
+using HypothesisTests, MultipleTesting, StatsBase, DelimitedFiles, HDF5
 
 """
 Helper function gives genomic length of loop (a,b) on
@@ -235,6 +232,30 @@ function triplets_1d(triplets::Array{Float64,3};periodic=true)
     end
 end
 
+function P_s(contacts;periodic=true)
+    N=size(contacts)[1]
+    P_s=zeros(N-1)
+    counts=zeros(N-1)
+    if !periodic
+        for i in 1:N
+            for j in i+1:N
+                s=j-i
+                P_s[s]+=contacts[i,j]
+                counts[s]+=1
+            end
+        end
+    else
+        for i in 1:N
+            for j in i+1:N
+                s=d_periodic(i,j,N)
+                P_s[s]+=contacts[i,j]
+                counts[s]+=1
+            end
+        end
+    end
+    return P_s./counts
+end
+
 """
 Given 3D array M(i,j,k)
 Return 2D projection A(i,j), where
@@ -284,8 +305,6 @@ function project_2d(M::Array{Float64,3};periodic=true)
     end
 end
 
-
-
 """
 Calculate elementwise z-scores presuming
 a binomial distribution with probabilities
@@ -307,7 +326,10 @@ given in pred.
 Data should be frequency data.
 """
 function p_vals(data,pred,N_samples::Int64)
-    ps=pvalue.(BinomialTest.(round.(Int64,N_samples*data),N_samples,pred))
+    ps=zeros(size(data))
+    non_nan=.!isnan.(pred)
+    ps[non_nan].=pvalue.(BinomialTest.(round.(Int64,N_samples*data[non_nan]),N_samples,pred[non_nan]))
+    ps[isnan.(data)].=NaN
     return ps
 end
 

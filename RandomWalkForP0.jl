@@ -11,6 +11,7 @@ Takes maybe 10 minutes to run with high number of samples. Ready
 made file is included.
 
 """
+
 using DelimitedFiles
 using ProgressMeter
 using LinearAlgebra
@@ -43,8 +44,8 @@ Simulate random walk for N_sims steps, return
 the contact matrix, where contacts are defined for
 every nth monomer being within rcl of each other
 """
-function contacts_FJC(N::Int64,R::Number,N_sims::Int64, n::Int64, rcl::Number)
-    contacts=zeros(Int(N/n),Int(N/n))
+function contacts_FJC(N::Int64,R::Number,N_sims::Int64, n::Int64, contact_radii::Vector{Float64})
+    contacts=Dict(Pair.(contact_radii, [zeros(Int(N/n),Int(N/n)) for i in 1:length(contact_radii)]))
     pos=zeros(3,N-n) #-n because last n-1 monomers not physical
 
     pos[:,1]=random_start_site(R)
@@ -53,8 +54,10 @@ function contacts_FJC(N::Int64,R::Number,N_sims::Int64, n::Int64, rcl::Number)
             pos[:,j].=next_site_FJC(pos[:,j-1],R)
             if j%n==1 #corresponds to bin
                 for k in 1:n:j-n
-                    if norm(pos[:,k].-pos[:,j])<rcl
-                        contacts[Int((k-1)/n+1),Int((j-1)/n+1)]+=1
+                    for rcl in contact_radii
+                        if norm(pos[:,k].-pos[:,j])<rcl
+                            contacts[rcl][Int((k-1)/n+1),Int((j-1)/n+1)]+=1
+                        end
                     end
                 end
             end
@@ -62,9 +65,10 @@ function contacts_FJC(N::Int64,R::Number,N_sims::Int64, n::Int64, rcl::Number)
         #reset the simulation
         pos[:,1].=random_start_site(R)
     end
-
-    contacts./=N_sims
-    contacts.+=transpose(contacts)
+    for rcl in contact_radii
+        contacts[rcl]./=N_sims
+        contacts[rcl].+=transpose(contacts[rcl])
+    end
 
     return contacts
 end
@@ -101,15 +105,16 @@ n=10                 #number of segments to map one data bin to
 b=377.1669/sqrt(n)   #monomer size
 N=65                 #total number of bins
 R=1674.905 / 2. / b  #radius of confinement, simulation units
-contact_r= 150. / b  #contact radius, simulation units
 num_sims=1000000     #total number sampled
-
-#Generate the name for the output file
-out_file_name= contact_folder*"P0_linear_n$(n)_b$(b)_N$(N)_R$(R).txt"
+contact_radii=[100, 125, 150, 175, 200]
 
 #Simulations with ProgressMeter
-contacts=contacts_FJC(N*n, R, num_sims, n, contact_r)
+contacts=contacts_FJC(N*n, R, num_sims, n, contact_radii./b) #returns dict with contact maps for different radii
 
-#Save
-av_contacts=average_contact_map(contacts)
-writedlm(out_file_name,av_contacts)
+for contact_r in  contact_radii#nm
+    #Generate the name for the output file
+    out_file_name= contact_folder*"P0_linear_n$(n)_b$(b)_N$(N)_R$(R)_contact_r_$contact_r.txt"
+    #Save
+    av_contacts=average_contact_map(contacts[contact_r/b])
+    writedlm(out_file_name,av_contacts)
+end

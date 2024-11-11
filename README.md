@@ -20,7 +20,7 @@
 ## Usage:
 - All scripts are written presuming that your working directory is this top directory
 - Running "./Extract_triplets/Extract_triplets_XXXX.jl" will use the provided raw data files to create both a contact frequency and a contact triplet frequency file. These are saved in "./Contact_files/" and "./Triplet_files/" respectively
-- The large triplet files are not included, but can be generated with the provided code or downloaded from https://www.dropbox.com/sh/i7n0oilssu0il0a/AACu_rbH7aXy578lVBVqLhwna?dl=0
+	-The large triplet files are not included, but can be generated with the provided code or downloaded from [Zenodo](https://doi.org/10.5281/zenodo.14065130) 
 
 - Code in "./Extract_triplets/Extract_triplets_Brandao_et_al.jl" can be edited to also extract the contact map from non-interacting simulations
 - The script "./RandomWalkForP0.jl" can be used to create a contact map for a non-interacting polymer roughly corresponding to the chromosome segment of the Bintu et. al. data set
