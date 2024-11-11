@@ -1,4 +1,4 @@
-# Physical models for chromosome organization to predict multi-contact statistics
+# Multi-contact statistics distinguish models of chromosome organization
  
 ## Summary of contents:
 1. Data files used for paper, as well as scripts for extracting contact and contact triplet frequencies
